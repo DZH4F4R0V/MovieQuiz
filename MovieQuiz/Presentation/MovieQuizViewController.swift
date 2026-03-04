@@ -27,7 +27,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             return
         }
         let buttonPressed = false
-        return showAnswerResult(isCorrect: buttonPressed == currentQuestion.correctAnswer)
+        return showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
     }
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
@@ -39,7 +39,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             return
         }
         let buttonPressed = true
-        return showAnswerResult(isCorrect: buttonPressed == currentQuestion.correctAnswer)
+        return showAnswerResult(isCorrect: currentQuestion.correctAnswer)
     }
     
     // MARK: - Private functions
@@ -94,6 +94,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private func show(quiz result: QuizResultsViewModel) {
         guard let statisticService = statisticService else { return }
         let message = "\(result.text)\nКоличество сыгранных квизов: \(statisticService.gamesCount)\nРекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\nСредняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
+        
             let model = AlertModel(title: result.title, message: message, buttonText: result.buttonText) { [weak self] in
                 guard let self = self else { return }
                 self.correctAnswers = 0
