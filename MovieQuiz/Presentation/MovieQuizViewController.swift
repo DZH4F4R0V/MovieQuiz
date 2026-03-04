@@ -2,10 +2,12 @@ import UIKit
 
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
 
+    // MARK: - IBOutlet
     @IBOutlet private var imageView: UIImageView!
     @IBOutlet private var textLabel: UILabel!
     @IBOutlet private var counterLabel: UILabel!
     
+    // MARK: - Private properties
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
     private let questionAmount: Int = 10
@@ -15,6 +17,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var statisticService: StatisticServiceProtocol?
     private var isAnswerProcessing: Bool = false
     
+    // MARK: - IBAction
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         if isAnswerProcessing {
             return
@@ -39,6 +42,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         return showAnswerResult(isCorrect: buttonPressed == currentQuestion.correctAnswer)
     }
     
+    // MARK: - Private functions
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel(
             image: UIImage(named: model.image) ?? UIImage(),
