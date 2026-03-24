@@ -8,7 +8,7 @@
 import Foundation
 
 protocol MoviesLoading {
-    func loadMovies(handler: @escaping (Result<MostPopularMovies, Error>) -> Void)
+    func loadMovies(useMock: Bool, handler: @escaping (Result<MostPopularMovies, Error>) -> Void)
 }
 
 struct MoviesLoader: MoviesLoading {
@@ -22,9 +22,13 @@ struct MoviesLoader: MoviesLoading {
         return url
     }
     
-    func loadMovies(handler: @escaping (Result<MostPopularMovies, Error>) -> Void) {
+    func loadMovies(useMock: Bool = false, handler: @escaping (Result<MostPopularMovies, Error>) -> Void) {
+        if useMock {
+            loadMockMovies(handler: handler)
+            return
+        }
+        
         networkClient.fetch(url: mostPopularMoviesUrl) { result in
-            
             switch result {
             case .success(let data):
                 do {
@@ -33,10 +37,24 @@ struct MoviesLoader: MoviesLoading {
                 } catch {
                     handler(.failure(error))
                 }
-                
             case .failure(let error):
                 handler(.failure(error))
             }
+        }
+    }
+    
+    private func loadMockMovies(handler: @escaping (Result<MostPopularMovies, Error>) -> Void) {
+        guard let url = Bundle.main.url(forResource: "mockData", withExtension: "json") else {
+            handler(.failure(NSError(domain: "mock", code: 0)))
+            return
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            let moviesList = try JSONDecoder().decode(MostPopularMovies.self, from: data)
+            handler(.success(moviesList))
+        } catch {
+            handler(.failure(error))
         }
     }
 }

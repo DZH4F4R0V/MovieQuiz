@@ -16,6 +16,7 @@ final class MovieQuizViewController: UIViewController {
     private var alertPresenter = AlertPresenter()
     private var statisticService: StatisticServiceProtocol?
     private var isAnswerProcessing: Bool = false
+    private var needUseMockData = false
     
     // MARK: - IBAction
     @IBAction private func noButtonClicked(_ sender: UIButton) {
@@ -126,9 +127,13 @@ final class MovieQuizViewController: UIViewController {
             
             self.currentQuestionIndex = 0
             self.correctAnswers = 0
+            self.isAnswerProcessing = false
             
-            self.showLoadingIndicator()
-            questionFactory?.loadData()
+            if let factory = self.questionFactory as? QuestionFactory {
+                factory.setUseMockData(true)
+                self.showLoadingIndicator()
+                factory.loadData()
+            }
         }
         
         alertPresenter.show(in: self, model: model)

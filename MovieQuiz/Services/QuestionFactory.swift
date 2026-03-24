@@ -12,6 +12,7 @@ class QuestionFactory: QuestionFactoryProtocol {
     
     private let moviesLoader: MoviesLoading
     private var movies: [MostPopularMovie] = []
+    private var useMockData: Bool = false
     
 //    private let questions: [QuizQuestion] = [
 //        QuizQuestion(image: "The Godfather", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: true),
@@ -33,6 +34,10 @@ class QuestionFactory: QuestionFactoryProtocol {
     
     func setDelegate(delegate: QuestionFactoryDelegate) {
         self.delegate = delegate
+    }
+    
+    func setUseMockData(_ useMock: Bool) {
+        self.useMockData = useMock
     }
     
     func requestNextQuestion() {
@@ -67,9 +72,10 @@ class QuestionFactory: QuestionFactoryProtocol {
     }
     
     func loadData() {
-        moviesLoader.loadMovies { [weak self] result in
+        moviesLoader.loadMovies(useMock: useMockData) { [weak self] result in
+            guard let self = self else { return }
+
             DispatchQueue.main.async {
-                guard let self = self else { return }
                 switch result {
                 case .success(let mostPopularMovies):
                     self.movies = mostPopularMovies.items
