@@ -8,48 +8,38 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private var counterLabel: UILabel!
     @IBOutlet private var activityIndicator: UIActivityIndicatorView!
     // MARK: - Private properties
-    private var currentQuestionIndex = 0
     private var correctAnswers = 0
-    private let questionAmount: Int = 10
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter = AlertPresenter()
     private var statisticService: StatisticServiceProtocol?
     private var isAnswerProcessing: Bool = false
     private var needUseMockData = false
+    private let presenter = MovieQuizPresenter()
     
     // MARK: - IBAction
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        guard !isAnswerProcessing, let currentQuestion else {
-            return
-        }
-        isAnswerProcessing = true
-        return showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
+        presenter.currentQuestion = currentQuestion
+        presenter.noButtonClicked()
+        presenter.resetAnswerProcessing()
     }
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        guard !isAnswerProcessing, let currentQuestion else {
-            return
-        }
-        isAnswerProcessing = true
-        return showAnswerResult(isCorrect: currentQuestion.correctAnswer)
+        presenter.currentQuestion = currentQuestion
+        presenter.yesButtonClicked()
+        presenter.resetAnswerProcessing()
     }
     
     // MARK: - Private functions
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        return QuizStepViewModel(
-            image: UIImage(data: model.image) ?? UIImage(),
-            question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questionAmount)")
-    }
     
     private func show(quiz step: QuizStepViewModel) {
-        imageView.image = step.image
+        imageView.layer.borderColor = UIColor.clear.cgColor
+        imageView.image = UIImage(data: step.image) ?? UIImage()
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
     }
     
-    private func showAnswerResult(isCorrect: Bool) {
+    func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
             correctAnswers += 1
         }
@@ -65,17 +55,17 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func showNextQuestionOrResult() {
-        if currentQuestionIndex == questionAmount - 1 {
+        if presenter.isLastQuestion() {
             imageView.layer.borderWidth = 0
             let lastQuestion = QuizResultsViewModel(
                 title: "Раунд окончен",
-                text: "Ваш результат: \(correctAnswers)/\(questionAmount)",
+                text: "Ваш результат: \(correctAnswers)/\(presenter.questionAmount)",
                 buttonText: "Сыграть еще раз"
             )
-            statisticService?.store(correct: correctAnswers, total: questionAmount)
+            statisticService?.store(correct: correctAnswers, total: presenter.questionAmount)
             show(quiz: lastQuestion)
         } else {
-            currentQuestionIndex += 1
+            presenter.switchToNextQuestion()
             imageView.layer.borderWidth = 0
             questionFactory?.requestNextQuestion()
             isAnswerProcessing = false
@@ -84,6 +74,7 @@ final class MovieQuizViewController: UIViewController {
     
     private func show(quiz result: QuizResultsViewModel) {
         guard let statisticService = statisticService else { return }
+        statisticService.store(correct: correctAnswers, total: presenter.questionAmount)
         let message = "\(result.text)\nКоличество сыгранных квизов: \(statisticService.gamesCount)\nРекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\nСредняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
         
         let model = AlertModel(title: result.title,
@@ -91,11 +82,10 @@ final class MovieQuizViewController: UIViewController {
                                buttonText: result.buttonText) { [weak self] in
             guard let self = self else { return }
             self.correctAnswers = 0
-            self.currentQuestionIndex = 0
             self.isAnswerProcessing = false
             self.questionFactory?.requestNextQuestion()
+            self.presenter.resetQuestionIndex()
         }
-        
         alertPresenter.show(in: self, model: model)
     }
     
@@ -125,7 +115,7 @@ final class MovieQuizViewController: UIViewController {
                                buttonText: "Попробовать еще раз") { [weak self] in
             guard let self = self else { return }
             
-            self.currentQuestionIndex = 0
+            self.presenter.resetQuestionIndex()
             self.correctAnswers = 0
             self.isAnswerProcessing = false
             
@@ -158,6 +148,7 @@ final class MovieQuizViewController: UIViewController {
         
         showLoadingIndicator()
         questionFactory?.loadData()
+        presenter.viewController = self
     }
 }
 
@@ -168,7 +159,7 @@ extension MovieQuizViewController: QuestionFactoryDelegate {
             return
         }
         currentQuestion = question
-        let viewModel = convert(model: question)
+        let viewModel = presenter.convert(model: question)
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }

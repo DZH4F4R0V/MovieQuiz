@@ -8,34 +8,103 @@
 import XCTest
 
 final class MovieQuizUITests: XCTestCase {
+    var app: XCUIApplication!
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
+        try super.setUpWithError()
+        
+        app = XCUIApplication()
+        app.launch()
+        
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
     }
 
     override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        try super.tearDownWithError()
+        
+        app.terminate()
+        app = nil
     }
 
     @MainActor
     func testExample() throws {
-        // UI tests must launch the application that they test.
         let app = XCUIApplication()
         app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
     }
-
-    @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
+    
+    func testYesButton() {
+        sleep(10)
+        
+        let firstPoster = app.images["Poster"]
+        let firstPosterData = firstPoster.screenshot().pngRepresentation
+        
+        app.buttons["Yes"].tap()
+        sleep(10)
+        
+        let secondPoster = app.images["Poster"]
+        let secondPosterData = secondPoster.screenshot().pngRepresentation
+        
+        XCTAssertNotEqual(firstPosterData, secondPosterData)
+    }
+    
+    func testIndexLabel() {
+        sleep(10)
+        
+        app.buttons["Yes"].tap()
+        
+        let indexLabel = app.staticTexts["Index"]
+        let QuestionIndexLabel = indexLabel.label
+        
+        XCTAssertEqual(QuestionIndexLabel, "2/10")
+    }
+    
+    func testNoButton() {
+        sleep(10)
+        
+        let firstPoster = app.images["Poster"]
+        let firstPosterData = firstPoster.screenshot().pngRepresentation
+        
+        app.buttons["No"].tap()
+        sleep(10)
+        
+        let secondPoster = app.images["Poster"]
+        let secondPosterData = secondPoster.screenshot().pngRepresentation
+        
+        let indexLabel = app.staticTexts["Index"]
+        
+        XCTAssertNotEqual(firstPosterData, secondPosterData)
+        XCTAssertEqual(indexLabel.label, "2/10")
+    }
+    
+    func testAlertShowed() {
+        sleep(3)
+        for _ in 0..<11 {
+            app.buttons["Yes"].tap()
+            
+            sleep(3)
         }
+        
+        let alertShown = app.alerts["Раунд окончен"]
+        XCTAssertTrue(alertShown.exists)
+        
+        XCTAssertEqual(alertShown.label, "Раунд окончен")
+        XCTAssertEqual(alertShown.buttons.firstMatch.label, "Сыграть еще раз")
+    }
+    
+    func testAlertDismiss() {
+        for _ in 0..<11 {
+            app.buttons["Yes"].tap()
+            sleep(3)
+        }
+        
+        let alertShown = app.alerts["Раунд окончен"]
+        alertShown.buttons.firstMatch.tap()
+        
+        sleep(3)
+        
+        let index = app.staticTexts["Index"]
+        
+        XCTAssertFalse(alertShown.exists)
+        XCTAssertEqual(index.label, "1/10")
     }
 }
