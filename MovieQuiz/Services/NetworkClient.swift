@@ -20,7 +20,7 @@ struct NetworkClient: NetworkRouting {
     
     func fetch(url: URL, handler: @escaping (Result<Data, Error>) -> Void) {
         var request = URLRequest(url: url)
-        request.timeoutInterval = 10
+        request.timeoutInterval = 5
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             // Проверяем, пришла ли ошибка

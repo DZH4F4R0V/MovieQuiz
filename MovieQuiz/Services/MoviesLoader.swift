@@ -37,7 +37,11 @@ struct MoviesLoader: MoviesLoading {
             case .success(let data):
                 do {
                     let moviesList = try JSONDecoder().decode(MostPopularMovies.self, from: data)
-                    handler(.success(moviesList))
+                    if moviesList.hasError {
+                        handler(.failure(NSError(domain: "API Error", code: 0, userInfo: [NSLocalizedDescriptionKey: moviesList.errorMessage])))
+                    } else {
+                        handler(.success(moviesList))
+                    }
                 } catch {
                     handler(.failure(error))
                 }
@@ -56,7 +60,11 @@ struct MoviesLoader: MoviesLoading {
         do {
             let data = try Data(contentsOf: url)
             let moviesList = try JSONDecoder().decode(MostPopularMovies.self, from: data)
-            handler(.success(moviesList))
+            if moviesList.hasError {
+                handler(.failure(NSError(domain: "API Error", code: 0, userInfo: [NSLocalizedDescriptionKey: moviesList.errorMessage])))
+            } else {
+                handler(.success(moviesList))
+            }
         } catch {
             handler(.failure(error))
         }

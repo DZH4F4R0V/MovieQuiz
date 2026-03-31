@@ -9,23 +9,30 @@ import XCTest
 
 final class MovieQuizUITests: XCTestCase {
     var app: XCUIApplication!
-
+    
     override func setUpWithError() throws {
         try super.setUpWithError()
         
         app = XCUIApplication()
+        
+        app.launchArguments = ["-ui-testing"]
+        
         app.launch()
         
         continueAfterFailure = false
     }
-
+    
     override func tearDownWithError() throws {
-        try super.tearDownWithError()
-        
         app.terminate()
         app = nil
+        try super.tearDownWithError()
     }
-
+    
+    private func waitForFirstQuestion() {
+        let indexLabel = app.staticTexts["Index"]
+        _ = indexLabel.waitForExistence(timeout: 10)
+    }
+    
     @MainActor
     func testExample() throws {
         let app = XCUIApplication()
@@ -33,78 +40,88 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testYesButton() {
-        sleep(10)
+        waitForFirstQuestion()
         
         let firstPoster = app.images["Poster"]
         let firstPosterData = firstPoster.screenshot().pngRepresentation
         
         app.buttons["Yes"].tap()
-        sleep(10)
+        
+        let indexLabel = app.staticTexts["Index"]
+        let predicate = NSPredicate(format: "label == '2/10'")
+        expectation(for: predicate, evaluatedWith: indexLabel, handler: nil)
+        waitForExpectations(timeout: 10)
         
         let secondPoster = app.images["Poster"]
         let secondPosterData = secondPoster.screenshot().pngRepresentation
         
         XCTAssertNotEqual(firstPosterData, secondPosterData)
+        XCTAssertEqual(indexLabel.label, "2/10")
     }
     
     func testIndexLabel() {
-        sleep(10)
+        let indexLabel = app.staticTexts["Index"]
+        _ = indexLabel.waitForExistence(timeout: 10)
         
         app.buttons["Yes"].tap()
         
-        let indexLabel = app.staticTexts["Index"]
-        let QuestionIndexLabel = indexLabel.label
+        let predicate = NSPredicate(format: "label == '2/10'")
+        expectation(for: predicate, evaluatedWith: indexLabel, handler: nil)
+        waitForExpectations(timeout: 10)
         
-        XCTAssertEqual(QuestionIndexLabel, "2/10")
+        XCTAssertEqual(indexLabel.label, "2/10")
     }
     
     func testNoButton() {
-        sleep(10)
+        waitForFirstQuestion()
         
         let firstPoster = app.images["Poster"]
         let firstPosterData = firstPoster.screenshot().pngRepresentation
         
         app.buttons["No"].tap()
-        sleep(10)
+        
+        let indexLabel = app.staticTexts["Index"]
+        let predicate = NSPredicate(format: "label == '2/10'")
+        expectation(for: predicate, evaluatedWith: indexLabel, handler: nil)
+        waitForExpectations(timeout: 5)
         
         let secondPoster = app.images["Poster"]
         let secondPosterData = secondPoster.screenshot().pngRepresentation
-        
-        let indexLabel = app.staticTexts["Index"]
         
         XCTAssertNotEqual(firstPosterData, secondPosterData)
         XCTAssertEqual(indexLabel.label, "2/10")
     }
     
     func testAlertShowed() {
-        sleep(3)
-        for _ in 0..<11 {
+        sleep(2)
+        for _ in 1...10 {
             app.buttons["Yes"].tap()
-            
-            sleep(3)
+            sleep(2)
         }
         
-        let alertShown = app.alerts["Раунд окончен"]
-        XCTAssertTrue(alertShown.exists)
+        let alert = app.alerts["Раунд окончен"]
         
-        XCTAssertEqual(alertShown.label, "Раунд окончен")
-        XCTAssertEqual(alertShown.buttons.firstMatch.label, "Сыграть еще раз")
+        XCTAssertTrue(alert.exists)
+        XCTAssertTrue(alert.label == "Раунд окончен")
+        XCTAssertTrue(alert.buttons.firstMatch.label == "Сыграть еще раз")
     }
     
     func testAlertDismiss() {
-        for _ in 0..<11 {
-            app.buttons["Yes"].tap()
-            sleep(3)
+        sleep(2)
+        for _ in 1...10 {
+            app.buttons["No"].tap()
+            sleep(2)
         }
         
-        let alertShown = app.alerts["Раунд окончен"]
-        alertShown.buttons.firstMatch.tap()
+        let alert = app.alerts["Раунд окончен"]
+        alert.buttons.firstMatch.tap()
         
-        sleep(3)
+        sleep(2)
         
-        let index = app.staticTexts["Index"]
+        let indexLabel = app.staticTexts["Index"]
         
-        XCTAssertFalse(alertShown.exists)
-        XCTAssertEqual(index.label, "1/10")
+        XCTAssertFalse(alert.exists)
+        XCTAssertTrue(indexLabel.label == "1/10")
     }
 }
+//
