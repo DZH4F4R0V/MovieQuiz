@@ -93,35 +93,55 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testAlertShowed() {
-        sleep(2)
-        for _ in 1...10 {
+        waitForFirstQuestion()
+        
+        let indexLabel = app.staticTexts["Index"]
+        
+        for i in 1...10 {
             app.buttons["Yes"].tap()
-            sleep(2)
+            
+            let nextIndex = i == 10 ? "10/10" : "\(i+1)/10"
+            let predicate = NSPredicate(format: "label == %@", nextIndex)
+            let expectation = XCTNSPredicateExpectation(predicate: predicate, object: indexLabel)
+            XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed)
         }
         
         let alert = app.alerts["Раунд окончен"]
-        
-        XCTAssertTrue(alert.exists)
+        XCTAssertTrue(alert.waitForExistence(timeout: 2))
         XCTAssertTrue(alert.label == "Раунд окончен")
         XCTAssertTrue(alert.buttons.firstMatch.label == "Сыграть еще раз")
     }
     
     func testAlertDismiss() {
-        sleep(2)
-        for _ in 1...10 {
-            app.buttons["No"].tap()
-            sleep(2)
-        }
-        
-        let alert = app.alerts["Раунд окончен"]
-        alert.buttons.firstMatch.tap()
-        
-        sleep(2)
+        waitForFirstQuestion()
         
         let indexLabel = app.staticTexts["Index"]
         
+        for i in 1...10 {
+            app.buttons["No"].tap()
+            
+            let nextIndex = i == 10 ? "10/10" : "\(i+1)/10"
+            let predicate = NSPredicate(format: "label == %@", nextIndex)
+            let expectation = XCTNSPredicateExpectation(predicate: predicate, object: indexLabel)
+            XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 5), .completed)
+        }
+        
+        let alert = app.alerts["Раунд окончен"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 2))
+        alert.buttons.firstMatch.tap()
+        
+        let alertVanished = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == false"),
+            object: alert
+        )
+        let indexReset = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label == '1/10'"),
+            object: indexLabel
+        )
+        
+        XCTAssertEqual(XCTWaiter.wait(for: [alertVanished, indexReset], timeout: 5), .completed)
         XCTAssertFalse(alert.exists)
-        XCTAssertTrue(indexLabel.label == "1/10")
+        XCTAssertEqual(indexLabel.label, "1/10")
     }
 }
 //

@@ -15,7 +15,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     var isAnswerProcessing: Bool = false
     var correctAnswers: Int = 0
     private var questionFactory: QuestionFactoryProtocol?
-    private let statisticService: StatisticServiceProtocol!
+    private let statisticService: StatisticServiceProtocol
     
     init(viewController: MovieQuizViewControllerProtocol) {
         self.viewController = viewController
@@ -51,7 +51,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     
     func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
-            image: model.image,
+            imageData: model.image,
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
@@ -78,7 +78,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     }
     
     func proceedToNextQuestionOrResults() {
-        if self.isLastQuestion() {
+        if isLastQuestion() {
             let text = "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
             
             let lastQuestion = QuizResultsViewModel(
@@ -105,9 +105,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     }
     
     func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
-            return
-        }
+        guard let question else { return }
         
         if question.image.isEmpty {
             questionFactory?.requestNextQuestion()

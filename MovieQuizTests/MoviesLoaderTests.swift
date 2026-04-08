@@ -22,7 +22,7 @@ class MoviesLoaderTests: XCTestCase {
             case.success(let movies):
                 XCTAssertEqual(movies.items.count, 2)
                 expectation.fulfill()
-            case.failure(_):
+            case.failure:
                 XCTFail("Unexpected failure")
             }
         }

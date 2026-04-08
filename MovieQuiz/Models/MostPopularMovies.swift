@@ -12,7 +12,7 @@ struct MostPopularMovies: Codable {
     let items: [MostPopularMovie]
     
     var hasError: Bool {
-        return !errorMessage.isEmpty
+        !errorMessage.isEmpty
     }
 }
 

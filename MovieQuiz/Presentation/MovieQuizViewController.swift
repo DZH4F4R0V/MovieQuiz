@@ -10,16 +10,16 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     // MARK: - Private properties
     private var alertPresenter = AlertPresenter()
     private var statisticService: StatisticServiceProtocol?
-    private var presenter: MovieQuizPresenter!
+    private var presenter: MovieQuizPresenter?
     
     // MARK: - IBAction
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        guard !presenter.isAnswerProcessing else { return }
+        guard let presenter, !presenter.isAnswerProcessing else { return }
         presenter.noButtonClicked()
     }
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        guard !presenter.isAnswerProcessing else { return }
+        guard let presenter, !presenter.isAnswerProcessing else { return }
         presenter.yesButtonClicked()
     }
     
@@ -27,7 +27,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     
     func show(quiz step: QuizStepViewModel) {
         imageView.layer.borderColor = UIColor.clear.cgColor
-        imageView.image = UIImage(data: step.image) ?? UIImage()
+        imageView.image = UIImage(data: step.imageData) ?? UIImage()
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
     }
@@ -40,14 +40,15 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     }
     
     func show(quiz result: QuizResultsViewModel) {
+        guard let presenter = presenter else { return }
         let message = presenter.makeResultMessage()
         
         let alert = AlertModel(title: result.title,
                                message: message,
                                buttonText: result.buttonText) { [weak self] in
-            guard let self = self else { return }
+            guard let self = self, let presenter = self.presenter else { return }
             presenter.isAnswerProcessing = false
-            self.presenter.restartGame()        }
+            presenter.restartGame()        }
         alertPresenter.show(in: self, model: alert)
     }
     
@@ -65,11 +66,9 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
         let model = AlertModel(title: "Ошибка",
                                message: message,
                                buttonText: "Попробовать еще раз") { [weak self] in
-            guard let self = self else { return }
-            
-            self.presenter.restartWithMockData()
+            guard let self = self, let presenter = self.presenter else { return }
+            presenter.restartWithMockData()
         }
-        
         alertPresenter.show(in: self, model: model)
     }
     
