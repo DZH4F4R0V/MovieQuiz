@@ -12,7 +12,11 @@ protocol MoviesLoading {
 }
 
 struct MoviesLoader: MoviesLoading {
-    private let networkClient = NetworkClient()
+    private let networkClient: NetworkRouting
+    
+    init(networkClient: NetworkRouting = NetworkClient()) {
+        self.networkClient = networkClient
+    }
     
     private var mostPopularMoviesUrl: URL {
         guard let url = URL(string: "https://tv-api.com/en/API/Top250Movies/k_zcuw1ytf") else {
@@ -33,7 +37,11 @@ struct MoviesLoader: MoviesLoading {
             case .success(let data):
                 do {
                     let moviesList = try JSONDecoder().decode(MostPopularMovies.self, from: data)
-                    handler(.success(moviesList))
+                    if moviesList.hasError {
+                        handler(.failure(NSError(domain: "API Error", code: 0, userInfo: [NSLocalizedDescriptionKey: moviesList.errorMessage])))
+                    } else {
+                        handler(.success(moviesList))
+                    }
                 } catch {
                     handler(.failure(error))
                 }
@@ -52,7 +60,11 @@ struct MoviesLoader: MoviesLoading {
         do {
             let data = try Data(contentsOf: url)
             let moviesList = try JSONDecoder().decode(MostPopularMovies.self, from: data)
-            handler(.success(moviesList))
+            if moviesList.hasError {
+                handler(.failure(NSError(domain: "API Error", code: 0, userInfo: [NSLocalizedDescriptionKey: moviesList.errorMessage])))
+            } else {
+                handler(.success(moviesList))
+            }
         } catch {
             handler(.failure(error))
         }
